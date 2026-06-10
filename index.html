@@ -1,16 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>马师傅的面食记</title>
 
 <style>
-html,
-body,
-#map {
+html, body, #map {
     width: 100%;
     height: 100%;
     margin: 0;
@@ -23,42 +19,32 @@ window._AMapSecurityConfig = {
     securityJsCode: "906b237ce7e6d39c79368462ace86b48"
 };
 </script>
-
 <script src="https://webapi.amap.com/maps?v=1.4.15&key=754c7308102647e8b08339aca65c666b"></script>
-
 </head>
 
 <body>
-
 <div id="map"></div>
 
 <script>
-
-// 用户位置
 let userPosition = null;
+let currentInfoWindow = null;
+let justOpenedFlag = false;
 
-// 创建地图
 const map = new AMap.Map('map', {
     zoom: 13,
     center: [104.0668, 30.5728]
 });
 
-// 距离计算
 function getDistance(restaurantPos) {
-
-    if (!userPosition) {
-        return "定位中...";
-    }
+    if (!userPosition) return "定位中...";
 
     const lng1 = userPosition.lng;
     const lat1 = userPosition.lat;
-
     const lng2 = restaurantPos[0];
     const lat2 = restaurantPos[1];
 
     const radLat1 = lat1 * Math.PI / 180;
     const radLat2 = lat2 * Math.PI / 180;
-
     const a = radLat1 - radLat2;
     const b = (lng1 - lng2) * Math.PI / 180;
 
@@ -72,242 +58,94 @@ function getDistance(restaurantPos) {
             )
         ) * 6378137;
 
-    if (distance < 1000) {
-        return Math.round(distance) + "米";
-    }
-
-    return (distance / 1000).toFixed(1) + "公里";
+    return distance < 1000
+        ? Math.round(distance) + "米"
+        : (distance / 1000).toFixed(1) + "公里";
 }
 
-// 面馆数据
 const restaurants = [
-
-{
-    name: '家常味(东方新城生活广场店)',
-    position: [104.102388,30.640822],
-    dishes: '素椒杂酱',
-    desc: '我心目中的杂酱面天花板，加一份干哨更香。'
-},
-
-{
-    name: '铁门杂酱面',
-    position: [104.10657,30.640667],
-    dishes: '杂酱面',
-    desc: '仅次于家常味，分量更大一些，辣度稍低。'
-},
-
-{
-    name: '谢记海味面',
-    position: [104.116893,30.655433],
-    dishes: '双绍面、海味面、排骨面',
-    desc: '价格不算便宜，份量偏小，但味道不错。'
-},
-
-{
-    name: '大碗面',
-    position: [104.060168,30.668779],
-    dishes: '素椒面',
-    desc: '价格不便宜，份量偏小，但味道很顶，很传统的老味道。'
-},
-
-{
-    name: '脆绍面（一环路店）',
-    position: [104.102127,30.661395],
-    dishes: '脆绍面',
-    desc: '老味道脆绍面，咸鲜微甜。'
-},
-
-{
-    name: '二号桥脆绍面',
-    position: [104.08314,30.684959],
-    dishes: '脆绍面',
-    desc: '偏甜口风格，整体不错。'
-},
-
-{
-    name: '香味面',
-    position: [104.094965,30.658117],
-    dishes: '豇豆面、蒸蛋',
-    desc: '偏甜口豇豆杂酱面，好吃但现在略贵。'
-},
-
-{
-    name: '清真特色牛肉面',
-    position: [104.045528,30.686295],
-    dishes: '牛肉面',
-    desc: '老成都原汤红烧牛肉面，很有小时候的味道。'
-},
-
-{
-    name: '怪味面',
-    position: [104.073301,30.637755],
-    dishes: '怪味面、鸡杂面',
-    desc: '鸡杂处理得极好，怪味面风格独特。'
-},
-
-{
-    name: '拜哥牛肉面',
-    position: [104.109679,30.657373],
-    dishes: '特色牛肉面、牛筋面',
-    desc: '重庆风格麻辣牛肉面，香料味较重。'
-},
-
-{
-    name: '左撇子私房面',
-    position: [104.100619,30.633164],
-    dishes: '杂酱面',
-    desc: '只卖豇豆杂酱面，中午两点收摊。'
-},
-
-{
-    name: '无名小面',
-    position: [104.105572,30.667215],
-    dishes: '排骨、牛肉、歪素椒',
-    desc: '老味道，价格实惠。'
-},
-
-{
-    name: '牛王庙全味面（踏水桥北街店）',
-    position: [104.102645,30.678033],
-    dishes: '鱼香排骨、豇豆面、素椒面、海味面',
-    desc: '老成都师傅开的，基本不踩雷。'
-},
-
-{
-    name: '东饮家常味',
-    position: [104.109725,30.657315],
-    dishes: '红油杂酱面',
-    desc: '家常味平替，建议加干绍。'
-},
-
-{
-    name: '弥春山甜水面',
-    position: [104.010918,30.672459],
-    dishes: '基本都推荐',
-    desc: '虽然叫甜水面，但其它面也非常好吃。'
-},
-
-{
-    name: '鸡汤铺盖面（红光小区店）',
-    position: [104.105675,30.667275],
-    dishes: '杂酱铺盖、排骨铺盖、牛肉铺盖',
-    desc: '个人觉得不输北大铺盖面。'
-},
-
-{
-    name: '六十七号杂酱面',
-    position: [104.091304,30.648772],
-    dishes: '基本都不踩雷',
-    desc: '温和派杂酱面，不辣但依然好吃。'
-},
-
-{
-    name: '同一口锅家常面',
-    position: [104.121098,30.651961],
-    dishes: '排骨面、酸菜面、海味面',
-    desc: '社区老面馆水平，稳定耐吃。'
-}
-
+  { name: '家常味(东方新城生活广场店)', position: [104.102388,30.640822], dishes: '素椒杂酱', desc: '我心目中的杂酱面天花板，加一份干哨更香。' },
+  { name: '铁门杂酱面', position: [104.10657,30.640667], dishes: '杂酱面', desc: '仅次于家常味，分量更大一些，辣度稍低。' },
+  { name: '谢记海味面', position: [104.116893,30.655433], dishes: '双绍面、海味面、排骨面', desc: '价格不算便宜，份量偏小，但味道不错。' },
+  { name: '大碗面', position: [104.060168,30.668779], dishes: '素椒面', desc: '价格不便宜，份量偏小，但味道很顶，很传统的老味道。' },
+  { name: '脆绍面（一环路店）', position: [104.102127,30.661395], dishes: '脆绍面', desc: '老味道脆绍面，咸鲜微甜。' },
+  { name: '二号桥脆绍面', position: [104.08314,30.684959], dishes: '脆绍面', desc: '偏甜口风格，整体不错。' },
+  { name: '香味面', position: [104.094965,30.658117], dishes: '豇豆面、蒸蛋', desc: '偏甜口豇豆杂酱面，好吃但现在略贵。' },
+  { name: '清真特色牛肉面', position: [104.045528,30.686295], dishes: '牛肉面', desc: '老成都原汤红烧牛肉面，很有小时候的味道。' },
+  { name: '怪味面', position: [104.073301,30.637755], dishes: '怪味面、鸡杂面', desc: '鸡杂处理得极好，怪味面风格独特。' },
+  { name: '拜哥牛肉面', position: [104.109679,30.657373], dishes: '特色牛肉面、牛筋面', desc: '重庆风格麻辣牛肉面，香料味较重。' },
+  { name: '左撇子私房面', position: [104.100619,30.633164], dishes: '杂酱面', desc: '只卖豇豆杂酱面，中午两点收摊。' },
+  { name: '无名小面', position: [104.105572,30.667215], dishes: '排骨、牛肉、歪素椒', desc: '老味道，价格实惠。' },
+  { name: '牛王庙全味面（踏水桥北街店）', position: [104.102645,30.678033], dishes: '鱼香排骨、豇豆面、素椒面、海味面', desc: '老成都师傅开的，基本不踩雷。' },
+  { name: '东饮家常味', position: [104.109725,30.657315], dishes: '红油杂酱面', desc: '家常味平替，建议加干绍。' },
+  { name: '弥春山甜水面', position: [104.010918,30.672459], dishes: '基本都推荐', desc: '虽然叫甜水面，但其它面也非常好吃。' },
+  { name: '鸡汤铺盖面（红光小区店）', position: [104.105675,30.667275], dishes: '杂酱铺盖、排骨铺盖、牛肉铺盖', desc: '个人觉得不输北大铺盖面。' },
+  { name: '六十七号杂酱面', position: [104.091304,30.648772], dishes: '基本都不踩雷', desc: '温和派杂酱面，不辣但依然好吃。' },
+  { name: '同一口锅家常面', position: [104.121098,30.651961], dishes: '排骨面、酸菜面、海味面', desc: '社区老面馆水平，稳定耐吃。' }
 ];
 
-// 创建标记
 function createMarkers() {
-
-    restaurants.forEach(function (restaurant) {
-
+    restaurants.forEach(r => {
         const marker = new AMap.Marker({
-            position: restaurant.position,
-            title: restaurant.name
+            position: r.position,
+            title: r.name
         });
-
         map.add(marker);
 
-        marker.on('click', function () {
+        marker.on('click', () => {
+            if (currentInfoWindow) {
+                currentInfoWindow.close();
+                currentInfoWindow = null;
+            }
 
             const infoWindow = new AMap.InfoWindow({
-
                 content: `
                 <div style="padding:10px;max-width:260px;">
-
-                    <h3>${restaurant.name}</h3>
-
-                    <p>📍距离：${getDistance(restaurant.position)}</p>
-
-                    <p>🍜推荐：${restaurant.dishes}</p>
-
-                    <p>📝评价：${restaurant.desc}</p>
-
-                    <a
-                        href="https://uri.amap.com/navigation?to=${restaurant.position[0]},${restaurant.position[1]},${encodeURIComponent(restaurant.name)}&mode=car"
-                        target="_blank"
-                        style="
-                            display:inline-block;
-                            margin-top:8px;
-                            padding:6px 12px;
-                            background:#409EFF;
-                            color:white;
-                            text-decoration:none;
-                            border-radius:6px;
-                        "
-                    >
+                    <h3 style="margin:0 0 6px;">${r.name}</h3>
+                    <p style="margin:4px 0;">📍 距离：${getDistance(r.position)}</p>
+                    <p style="margin:4px 0;">🍜 推荐：${r.dishes}</p>
+                    <p style="margin:4px 0;">📝 评价：${r.desc}</p>
+                    <a href="https://uri.amap.com/navigation?to=${r.position[0]},${r.position[1]},${encodeURIComponent(r.name)}&mode=car"
+                       target="_blank"
+                       style="display:inline-block;margin-top:8px;padding:6px 12px;background:#409EFF;color:#fff;text-decoration:none;border-radius:6px;font-size:13px;">
                         🚗 导航过去
                     </a>
-
-                </div>
-                `,
+                </div>`,
                 offset: new AMap.Pixel(0, -30)
-
             });
 
-            infoWindow.open(map, marker.getPosition());
+            infoWindow.open(map, r.position);
+            currentInfoWindow = infoWindow;
 
+            justOpenedFlag = true;
+            setTimeout(() => justOpenedFlag = false, 120);
         });
-
     });
-
 }
 
-// 创建标记
 createMarkers();
 
-// 定位插件
-AMap.plugin('AMap.Geolocation', function () {
-
-    const geolocation = new AMap.Geolocation({
-
-        enableHighAccuracy: true,
-
-        timeout: 10000,
-
-        position: 'RB',
-
-        zoomToAccuracy: true
-
-    });
-
-    map.addControl(geolocation);
-
-    geolocation.getCurrentPosition(function (status, result) {
-
-        if (status === 'complete') {
-
-            userPosition = result.position;
-
-            console.log('定位成功');
-            console.log(result.position);
-
-        } else {
-
-            console.log('定位失败');
-            console.log(result);
-
-        }
-
-    });
-
+map.on('click', () => {
+    if (justOpenedFlag) return;
+    if (!currentInfoWindow) return;
+    currentInfoWindow.close();
+    currentInfoWindow = null;
 });
 
+AMap.plugin('AMap.Geolocation', () => {
+    const geo = new AMap.Geolocation({
+        enableHighAccuracy: true,
+        timeout: 10000,
+        position: 'RB',
+        zoomToAccuracy: true
+    });
+    map.addControl(geo);
+    geo.getCurrentPosition((status, result) => {
+        if (status === 'complete') {
+            userPosition = result.position;
+        }
+    });
+});
 </script>
-
 </body>
 </html>
