@@ -146,20 +146,6 @@ AMap.plugin('AMap.Geolocation', () => {
         }
     });
 });
-map.on('touchstart', function (e) {
-    // 防止刚点 marker 就误关
-    if (justOpenedFlag) return;
-    if (!currentInfoWindow) return;
-
-    // 判断是否点在 InfoWindow 上
-    const target = e.originalEvent && e.originalEvent.target;
-    if (target && target.closest && target.closest('.amap-info')) {
-        return;
-    }
-
-    currentInfoWindow.close();
-    currentInfoWindow = null;
-});
 </script>
 </body>
 </html>
